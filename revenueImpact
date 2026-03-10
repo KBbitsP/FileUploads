@@ -1,0 +1,50 @@
+SELECT 
+    new_ii.account_id,
+    new_ii.subscription_id,
+    new_ii.type AS item_type,
+    
+    -- The Original (Paid/Billed) Invoice
+    old_i.id AS original_invoice_id,
+    old_i.invoice_date AS original_invoice_date,
+    
+    -- The New (Duplicate) Invoice
+    new_i.id AS duplicate_invoice_id,
+    new_i.invoice_date AS duplicate_invoice_date,
+    
+    -- The aggregated duplicate totals WITH CURRENCY
+    COUNT(new_ii.id) AS duplicated_line_items,
+    new_ii.currency AS charge_currency,
+    SUM(new_ii.amount) AS duplicated_charge_amount
+
+FROM invoice_items new_ii
+JOIN invoices new_i ON new_ii.invoice_id = new_i.id
+
+-- Self-join to find the older invoice items for the EXACT same billing period
+JOIN invoice_items old_ii ON new_ii.subscription_id = old_ii.subscription_id 
+    AND new_ii.start_date = old_ii.start_date 
+    AND (new_ii.end_date = old_ii.end_date OR (new_ii.end_date IS NULL AND old_ii.end_date IS NULL))
+    AND old_ii.type = new_ii.type
+JOIN invoices old_i ON old_ii.invoice_id = old_i.id
+
+WHERE new_ii.type IN ('USAGE', 'RECURRING', 'FIXED', 'EXTERNAL_CHARGE')
+  AND new_ii.amount > 0 
+  AND old_ii.amount > 0
+  AND new_i.invoice_date > old_i.invoice_date
+  
+  -- Logic: Did the Usage, Plan, OR Phase name lose its suffix?
+  AND (
+      (COALESCE(old_ii.usage_name, '') LIKE CONCAT(COALESCE(new_ii.usage_name, ''), '%') AND COALESCE(old_ii.usage_name, '') != COALESCE(new_ii.usage_name, '')) OR
+      (COALESCE(old_ii.plan_name, '') LIKE CONCAT(COALESCE(new_ii.plan_name, ''), '%') AND COALESCE(old_ii.plan_name, '') != COALESCE(new_ii.plan_name, '')) OR
+      (COALESCE(old_ii.phase_name, '') LIKE CONCAT(COALESCE(new_ii.phase_name, ''), '%') AND COALESCE(old_ii.phase_name, '') != COALESCE(new_ii.phase_name, ''))
+  )
+
+GROUP BY 
+    new_ii.account_id,
+    new_ii.subscription_id,
+    new_ii.type,
+    new_ii.currency,
+    old_i.id,
+    old_i.invoice_date,
+    new_i.id,
+    new_i.invoice_date
+ORDER BY new_i.invoice_date DESC, old_i.invoice_date DESC;
