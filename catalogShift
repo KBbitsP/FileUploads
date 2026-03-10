@@ -1,0 +1,39 @@
+WITH CatalogTimeline AS (
+    -- Establish the exact timeline of when each catalog version and usage name was first generated
+    SELECT 
+        catalog_effective_date,
+        usage_name,
+        MIN(created_date) AS first_generated
+    FROM invoice_items
+    WHERE type = 'USAGE'
+    GROUP BY catalog_effective_date, usage_name
+)
+SELECT 
+    -- PAST LEDGER: What the customer was originally billed
+    old_i.invoice_date AS original_invoice_date,
+    old_ii.usage_name AS original_usage_name_with_suffix,
+    old_cat.first_generated AS original_name_first_used_on,
+    
+    -- NEW LEDGER: The duplicate charges generated during the upgrade
+    new_i.invoice_date AS newly_generated_invoice_date,
+    new_ii.usage_name AS new_standardized_usage_name,
+    new_ii.amount AS duplicate_charge_amount,
+    new_cat.first_generated AS new_name_first_used_on
+FROM invoice_items old_ii
+JOIN invoices old_i ON old_ii.invoice_id = old_i.id
+JOIN invoice_items new_ii ON old_ii.subscription_id = new_ii.subscription_id 
+    AND old_ii.start_date = new_ii.start_date 
+    AND old_ii.end_date = new_ii.end_date
+JOIN invoices new_i ON new_ii.invoice_id = new_i.id
+LEFT JOIN CatalogTimeline old_cat 
+    ON old_ii.catalog_effective_date = old_cat.catalog_effective_date 
+    AND old_ii.usage_name = old_cat.usage_name
+LEFT JOIN CatalogTimeline new_cat 
+    ON new_ii.catalog_effective_date = new_cat.catalog_effective_date 
+    AND new_ii.usage_name = new_cat.usage_name
+WHERE old_ii.type = 'USAGE' AND new_ii.type = 'USAGE'
+  AND old_ii.amount > 0 AND new_ii.amount > 0
+  AND old_i.invoice_date < '2026-03-01'  
+  AND new_i.invoice_date >= '2026-03-01' 
+  AND old_ii.usage_name LIKE CONCAT(new_ii.usage_name, '%')
+ORDER BY new_ii.usage_name ASC;
