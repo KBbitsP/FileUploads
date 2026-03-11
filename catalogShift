@@ -6,6 +6,8 @@ WITH CatalogTimeline AS (
         MIN(created_date) AS first_generated
     FROM invoice_items
     WHERE type = 'USAGE'
+      -- Filter CTE for the specific test subscription
+      AND subscription_id = '3a9fe8c2-0690-4f8e-b3e4-3288254f0a1a'
     GROUP BY catalog_effective_date, usage_name
 )
 SELECT 
@@ -13,11 +15,10 @@ SELECT
     old_i.invoice_date AS original_invoice_date,
     old_ii.usage_name AS original_usage_name_with_suffix,
     old_cat.first_generated AS original_name_first_used_on,
-    
+
     -- NEW LEDGER: The duplicate charges generated during the upgrade
     new_i.invoice_date AS newly_generated_invoice_date,
     new_ii.usage_name AS new_standardized_usage_name,
-    new_ii.amount AS duplicate_charge_amount,
     new_cat.first_generated AS new_name_first_used_on
 FROM invoice_items old_ii
 JOIN invoices old_i ON old_ii.invoice_id = old_i.id
@@ -32,6 +33,8 @@ LEFT JOIN CatalogTimeline new_cat
     ON new_ii.catalog_effective_date = new_cat.catalog_effective_date 
     AND new_ii.usage_name = new_cat.usage_name
 WHERE old_ii.type = 'USAGE' AND new_ii.type = 'USAGE'
+  -- Filter main ledger comparison for the specific test subscription
+  AND old_ii.subscription_id = '3a9fe8c2-0690-4f8e-b3e4-3288254f0a1a'
   AND old_ii.amount > 0 AND new_ii.amount > 0
   AND old_i.invoice_date < '2026-03-01'  
   AND new_i.invoice_date >= '2026-03-01' 
