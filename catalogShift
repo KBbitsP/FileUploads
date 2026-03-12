@@ -1,4 +1,4 @@
--- Need to pass Subscription ID at lines 11 and 38 of this file
+-- Need to pass Subscription ID at lines 11 and 43 of this file
 WITH CatalogTimeline AS (
     -- Establish the exact timeline of when each catalog version and usage name was first generated
     SELECT 
@@ -13,13 +13,16 @@ WITH CatalogTimeline AS (
 )
 SELECT     
     old_ii.tenant_record_id,
+    old_ii.account_id,
 
     -- PAST LEDGER: What the customer was originally billed
+    old_i.id AS original_invoice_id,
     old_i.invoice_date AS original_invoice_date,
     old_ii.usage_name AS original_usage_name_with_suffix,
     old_cat.first_generated AS original_name_first_used_on,
 
     -- NEW LEDGER: The duplicate charges generated during the upgrade
+    new_i.id AS new_invoice_id,
     new_i.invoice_date AS newly_generated_invoice_date,
     new_ii.usage_name AS new_standardized_usage_name,
     new_cat.first_generated AS new_name_first_used_on
