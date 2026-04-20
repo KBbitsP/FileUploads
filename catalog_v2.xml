@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<catalog>
+    <effectiveDate>2026-02-01T00:00:00Z</effectiveDate>
+    <catalogName>DEFAULT</catalogName>
+    <recurringBillingMode>IN_ADVANCE</recurringBillingMode>
+    <currencies>
+        <currency>USD</currency>
+    </currencies>
+    
+    <products>
+        <product name="Standard">
+            <category>BASE</category>
+            <available>
+                <addonProduct>RemoteControl</addonProduct>
+            </available>
+        </product>
+        <product name="RemoteControl">
+            <category>ADD_ON</category>
+        </product>
+    </products>
+    
+    <rules>
+        <changePolicy>
+            <changePolicyCase><policy>IMMEDIATE</policy></changePolicyCase>
+        </changePolicy>
+        <changeAlignment>
+            <changeAlignmentCase><alignment>START_OF_BUNDLE</alignment></changeAlignmentCase>
+        </changeAlignment>
+        <cancelPolicy>
+            <cancelPolicyCase><policy>IMMEDIATE</policy></cancelPolicyCase>
+        </cancelPolicy>
+        <createAlignment>
+            <createAlignmentCase><alignment>START_OF_BUNDLE</alignment></createAlignmentCase>
+        </createAlignment>
+        <billingAlignment>
+            <billingAlignmentCase><alignment>ACCOUNT</alignment></billingAlignmentCase>
+        </billingAlignment>
+        <priceList>
+            <priceListCase><toPriceList>DEFAULT</toPriceList></priceListCase>
+        </priceList>
+    </rules>
+    
+    <plans>
+        <plan name="standard-daily">
+            <product>Standard</product>
+            <initialPhases>
+                <phase type="DISCOUNT">
+                    <duration>
+                        <unit>DAYS</unit>
+                        <number>1</number>
+                    </duration>
+                    <fixed type="ONE_TIME">
+                        <fixedPrice>
+                            <price>
+                                <currency>USD</currency>
+                                <value>723</value>
+                            </price>
+                        </fixedPrice>
+                    </fixed>
+                    <recurring>
+                        <billingPeriod>DAILY</billingPeriod>
+                        <recurringPrice>
+                            <price>
+                                <currency>USD</currency>
+                                <value>234</value>
+                            </price>
+                        </recurringPrice>
+                    </recurring>
+                </phase>
+            </initialPhases>
+            <finalPhase type="EVERGREEN">
+                <duration>
+                    <unit>UNLIMITED</unit>
+                </duration>
+                <recurring>
+                    <billingPeriod>DAILY</billingPeriod>
+                    <recurringPrice>
+                        <price>
+                            <currency>USD</currency>
+                            <value>234</value>
+                        </price>
+                    </recurringPrice>
+                </recurring>
+            </finalPhase>
+        </plan>
+        
+        <plan name="remotecontrol-daily">
+            <product>RemoteControl</product>
+            <finalPhase type="EVERGREEN">
+                <duration>
+                    <unit>UNLIMITED</unit>
+                </duration>
+                <recurring>
+                    <billingPeriod>DAILY</billingPeriod>
+                    <recurringPrice>
+                        <price>
+                            <currency>USD</currency>
+                            <value>0</value>
+                        </price>
+                    </recurringPrice>
+                </recurring>
+            </finalPhase>
+        </plan>
+    </plans>
+    
+    <priceLists>
+        <defaultPriceList name="DEFAULT">
+            <plans>
+                <plan>standard-daily</plan>
+                <plan>remotecontrol-daily</plan>
+            </plans>
+        </defaultPriceList>
+    </priceLists>
+</catalog>
